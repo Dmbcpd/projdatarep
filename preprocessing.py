@@ -16,12 +16,7 @@ class Pipeline():
     
     def __init__(self):
         self.df = self.get_df()
-        self.get_num_words()
-        self.get_num_chars()
-        self.get_avg_word_len()
-        self.get_num_stopwords()
-        self.get_has_link()
-        self.clean_data()
+        self.run_all()
     
     def get_df(self):
         """
@@ -99,24 +94,50 @@ class Pipeline():
             0
         """
         self.df['HAS_SUBSCRIBE'] = self.df['TOKENS'].apply(lambda x: 1 if 'subscribe' in x else 0)
-
-    def clean_data(self):
+        
+    
+    def get_sentiment(self):
         """
-        clean_data() preprocesses self.df['CONTENT'] and runs feature extraction that requires clean data
-        INCLUDES
+        Makes POLARITY and SUBJECTIVITY columns
+        """
+        sentiments = list(self.df['CONTENT'].apply(lambda x: TextBlob(x).sentiment))
+        self.df['SUBJECTIVITY'] , self.df['POLARITY'] = zip(*sentiments)
+        
+    def get_term_frequency_table(self):
+        pass
+    
+    def run_all(self):
+        """
+        run_all() is catch all function that 
+        preprocesses self.df['CONTENT']
+        runs feature extraction that requires clean data
+        INCLUDES in order
+        self.get_num_words()
+        self.get_num_chars()
+        self.get_avg_word_len()
+        self.get_num_stopwords()
+        self.get_has_link()
         lowercase all text
         removes punctuation
         removes stop words
         spelling correction
         Makes TOKENS column by tokenization
         lemmatization
-        AFTER
-        Runs
         self.get_has_channel()
         self.get_has_subscribe()
         THEN
         removes most frequent and rare words
         """
+        print("Makes WORD_COUNT column")
+        self.get_num_words()
+        print("Makes CHAR_COUNT column")
+        self.get_num_chars()
+        print("Makes AVG_WORD_LEN column")
+        self.get_avg_word_len()
+        print("Makes NUM_STOPWORDS column")
+        self.get_num_stopwords()
+        print("Makes HAS_LINK column")
+        self.get_has_link()
         print("Lowercase All CONTENT")
         self.df['CONTENT'] = self.df['CONTENT'].apply(lambda x: " ".join(x.lower() for x in x.split()))
         print("Removing Punctuation")
@@ -124,12 +145,19 @@ class Pipeline():
         print("Removing Stopwords")
         stop = stopwords.words('english')
         self.df['CONTENT'] = self.df['CONTENT'].apply(lambda x: " ".join(x for x in x.split() if x not in stop))
+        #print("Spelling Corrections") 
+        #TAKES TOO LONG
+        #self.df['CONTENT'] = self.df['CONTENT'].apply(lambda x: str(TextBlob(x).correct()))
+        print("Lemmatizing")
+        self.df['CONTENT'] = self.df['CONTENT'].apply(lambda x: " ".join([Word(word).lemmatize() for word in x.split()]))
         print("Creating TOKENS Column")
         self.df['TOKENS'] = self.df['CONTENT'].apply(lambda x: list(TextBlob(x).words))
         print("Making HAS_CHANNEL column")
         self.get_has_channel()
         print("Making HAS_SUBSCRIBE column")
         self.get_has_subscribe()
+        print("Making POLARITY and SUBJECTIVITY COLUMNS")
+        self.get_sentiment()
         
         
         
