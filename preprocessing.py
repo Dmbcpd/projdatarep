@@ -5,6 +5,7 @@ https://www.analyticsvidhya.com/blog/2018/02/the-different-methods-deal-text-dat
 import re
 import pandas as pd
 from nltk.corpus import stopwords
+from textblob import TextBlob, Word
 
 
 class Pipeline():
@@ -20,6 +21,7 @@ class Pipeline():
         self.get_avg_word_len()
         self.get_num_stopwords()
         self.get_has_link()
+        self.clean_data()
     
     def get_df(self):
         """
@@ -78,6 +80,58 @@ class Pipeline():
         """
         WEB_URL_REGEX = r"""(?i)\b((?:https?:(?:/{1,3}|[a-z0-9%])|[a-z0-9.\-]+[.](?:com|net|org|edu|gov|mil|aero|asia|biz|cat|coop|info|int|jobs|mobi|museum|name|post|pro|tel|travel|xxx|ac|ad|ae|af|ag|ai|al|am|an|ao|aq|ar|as|at|au|aw|ax|az|ba|bb|bd|be|bf|bg|bh|bi|bj|bm|bn|bo|br|bs|bt|bv|bw|by|bz|ca|cc|cd|cf|cg|ch|ci|ck|cl|cm|cn|co|cr|cs|cu|cv|cx|cy|cz|dd|de|dj|dk|dm|do|dz|ec|ee|eg|eh|er|es|et|eu|fi|fj|fk|fm|fo|fr|ga|gb|gd|ge|gf|gg|gh|gi|gl|gm|gn|gp|gq|gr|gs|gt|gu|gw|gy|hk|hm|hn|hr|ht|hu|id|ie|il|im|in|io|iq|ir|is|it|je|jm|jo|jp|ke|kg|kh|ki|km|kn|kp|kr|kw|ky|kz|la|lb|lc|li|lk|lr|ls|lt|lu|lv|ly|ma|mc|md|me|mg|mh|mk|ml|mm|mn|mo|mp|mq|mr|ms|mt|mu|mv|mw|mx|my|mz|na|nc|ne|nf|ng|ni|nl|no|np|nr|nu|nz|om|pa|pe|pf|pg|ph|pk|pl|pm|pn|pr|ps|pt|pw|py|qa|re|ro|rs|ru|rw|sa|sb|sc|sd|se|sg|sh|si|sj|Ja|sk|sl|sm|sn|so|sr|ss|st|su|sv|sx|sy|sz|tc|td|tf|tg|th|tj|tk|tl|tm|tn|to|tp|tr|tt|tv|tw|tz|ua|ug|uk|us|uy|uz|va|vc|ve|vg|vi|vn|vu|wf|ws|ye|yt|yu|za|zm|zw)/)(?:[^\s()<>{}\[\]]+|\([^\s()]*?\([^\s()]+\)[^\s()]*?\)|\([^\s]+?\))+(?:\([^\s()]*?\([^\s()]+\)[^\s()]*?\)|\([^\s]+?\)|[^\s`!()\[\]{};:'".,<>?«»“”‘’])|(?:(?<!@)[a-z0-9]+(?:[.\-][a-z0-9]+)*[.](?:com|net|org|edu|gov|mil|aero|asia|biz|cat|coop|info|int|jobs|mobi|museum|name|post|pro|tel|travel|xxx|ac|ad|ae|af|ag|ai|al|am|an|ao|aq|ar|as|at|au|aw|ax|az|ba|bb|bd|be|bf|bg|bh|bi|bj|bm|bn|bo|br|bs|bt|bv|bw|by|bz|ca|cc|cd|cf|cg|ch|ci|ck|cl|cm|cn|co|cr|cs|cu|cv|cx|cy|cz|dd|de|dj|dk|dm|do|dz|ec|ee|eg|eh|er|es|et|eu|fi|fj|fk|fm|fo|fr|ga|gb|gd|ge|gf|gg|gh|gi|gl|gm|gn|gp|gq|gr|gs|gt|gu|gw|gy|hk|hm|hn|hr|ht|hu|id|ie|il|im|in|io|iq|ir|is|it|je|jm|jo|jp|ke|kg|kh|ki|km|kn|kp|kr|kw|ky|kz|la|lb|lc|li|lk|lr|ls|lt|lu|lv|ly|ma|mc|md|me|mg|mh|mk|ml|mm|mn|mo|mp|mq|mr|ms|mt|mu|mv|mw|mx|my|mz|na|nc|ne|nf|ng|ni|nl|no|np|nr|nu|nz|om|pa|pe|pf|pg|ph|pk|pl|pm|pn|pr|ps|pt|pw|py|qa|re|ro|rs|ru|rw|sa|sb|sc|sd|se|sg|sh|si|sj|Ja|sk|sl|sm|sn|so|sr|ss|st|su|sv|sx|sy|sz|tc|td|tf|tg|th|tj|tk|tl|tm|tn|to|tp|tr|tt|tv|tw|tz|ua|ug|uk|us|uy|uz|va|vc|ve|vg|vi|vn|vu|wf|ws|ye|yt|yu|za|zm|zw)\b/?(?!@)))"""
         self.df['HAS_LINK'] = self.df['CONTENT'].apply(lambda x: 1 if len(re.findall(WEB_URL_REGEX, x)) > 0 else 0 )
+        
+    def get_has_channel(self):
+        """
+        Binary encodes and Makes HAS_CHANNEL columns in self.df
+        If HAS_CHANNEL(word):
+            1
+        ELSE:
+            0
+        """
+        self.df['HAS_CHANNEL'] = self.df['TOKENS'].apply(lambda x: 1 if 'channel' in x else 0)
+    def get_has_subscribe(self):
+        """
+        Binary encodes and Makes HAS_CHANNEL columns in self.df
+        If HAS_SUBSCRIBE(word):
+            1
+        ELSE:
+            0
+        """
+        self.df['HAS_SUBSCRIBE'] = self.df['TOKENS'].apply(lambda x: 1 if 'subscribe' in x else 0)
+
+    def clean_data(self):
+        """
+        clean_data() preprocesses self.df['CONTENT'] and runs feature extraction that requires clean data
+        INCLUDES
+        lowercase all text
+        removes punctuation
+        removes stop words
+        spelling correction
+        Makes TOKENS column by tokenization
+        lemmatization
+        AFTER
+        Runs
+        self.get_has_channel()
+        self.get_has_subscribe()
+        THEN
+        removes most frequent and rare words
+        """
+        print("Lowercase All CONTENT")
+        self.df['CONTENT'] = self.df['CONTENT'].apply(lambda x: " ".join(x.lower() for x in x.split()))
+        print("Removing Punctuation")
+        self.df['CONTENT'] = self.df['CONTENT'].str.replace('[^\w\s]','')
+        print("Removing Stopwords")
+        stop = stopwords.words('english')
+        self.df['CONTENT'] = self.df['CONTENT'].apply(lambda x: " ".join(x for x in x.split() if x not in stop))
+        print("Creating TOKENS Column")
+        self.df['TOKENS'] = self.df['CONTENT'].apply(lambda x: list(TextBlob(x).words))
+        print("Making HAS_CHANNEL column")
+        self.get_has_channel()
+        print("Making HAS_SUBSCRIBE column")
+        self.get_has_subscribe()
+        
+        
         
 p = Pipeline()
 df = p.df
