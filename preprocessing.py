@@ -160,6 +160,4 @@ class Pipeline():
         self.get_sentiment()
         
         
-        
-p = Pipeline()
-df = p.df
+
