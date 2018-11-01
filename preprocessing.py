@@ -37,8 +37,8 @@ class Pipeline():
             df = pd.read_csv(paths[i])
             df['ARTIST'] = names[i]
             dfs.append(df)
-            
-        return pd.concat(dfs)
+        
+        return pd.concat(dfs, ignore_index=True)
     
     def get_num_words(self):
         """
@@ -175,7 +175,4 @@ class Pipeline():
         self.get_has_subscribe()
         print("Making POLARITY and SUBJECTIVITY COLUMNS")
         self.get_sentiment()
-        
-df = Pipeline().df
-print(df.DOC2VEC.head(10))
 
