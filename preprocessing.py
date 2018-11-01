@@ -2,11 +2,12 @@
 Cite 
 https://www.analyticsvidhya.com/blog/2018/02/the-different-methods-deal-text-data-predictive-python/
 """
+
 import re
+import glob
 import pandas as pd
 from nltk.corpus import stopwords
 from textblob import TextBlob, Word
-
 
 class Pipeline():
     """
@@ -23,15 +24,15 @@ class Pipeline():
         Loads all csv files as df and adds ARTIST column
         Returns Concatenated df
         """
-        names = ["Place",
-                "Psy",
+        names = ["Psy",
                  "KatyPerry",
                  "LMFAO",
                  "Eminem",
                  "Shakira"]
+        paths = sorted(glob.glob("datasets/*"))
         dfs = []
-        for i in range(1,6):
-            df = pd.read_csv("datasets\Youtube0{}-{}.csv".format(i, names[i]))
+        for i in range(5):
+            df = pd.read_csv(paths[i])
             df['ARTIST'] = names[i]
             dfs.append(df)
             
