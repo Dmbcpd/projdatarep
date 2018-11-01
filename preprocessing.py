@@ -5,6 +5,7 @@ https://www.analyticsvidhya.com/blog/2018/02/the-different-methods-deal-text-dat
 
 import re
 import glob
+import gensim
 import pandas as pd
 from nltk.corpus import stopwords
 from textblob import TextBlob, Word
@@ -18,6 +19,7 @@ class Pipeline():
     def __init__(self):
         self.df = self.get_df()
         self.run_all()
+        self.doc2vec_model = self.get_doc_vectors()
     
     def get_df(self):
         """
@@ -106,7 +108,21 @@ class Pipeline():
         
     def get_term_frequency_table(self):
         pass
-    
+
+    def get_doc_vectors(self):
+        corpus = []
+        for i, line in enumerate(self.df.CONTENT.values):
+            corpus.append(gensim.models.doc2vec.TaggedDocument(gensim.utils.simple_preprocess(line), [i]))
+        
+        
+        model = gensim.models.doc2vec.Doc2Vec(vector_size=50, min_count=2, epochs=40)
+        model.build_vocab(corpus)
+        model.train(corpus, total_examples=model.corpus_count, epochs=model.epochs)
+        print("Getting DOC2VECTORS")
+        self.df['DOC2VEC'] = [model[i] for i in range(len(corpus))]
+        return model
+        
+
     def run_all(self):
         """
         run_all() is catch all function that 
@@ -160,5 +176,6 @@ class Pipeline():
         print("Making POLARITY and SUBJECTIVITY COLUMNS")
         self.get_sentiment()
         
-        
+df = Pipeline().df
+print(df.DOC2VEC.head(10))
 
